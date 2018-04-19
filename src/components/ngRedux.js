@@ -23,6 +23,7 @@ export default function ngReduxProvider() {
   let _initialState = undefined;
   let _reducerIsObject = undefined;
   let _providedStore = undefined;
+  let _compose = undefined;
 
   this.provideStore = (store, middlewares = [], storeEnhancers) => {
     _providedStore = store;
@@ -31,7 +32,7 @@ export default function ngReduxProvider() {
     _middlewares = [...middlewares, providedStoreMiddleware(store)];
   }
 
-  this.createStoreWith = (reducer, middlewares, storeEnhancers, initialState) => {
+  this.createStoreWith = (reducer, middlewares, storeEnhancers, initialState, customCompose) => {
     invariant(
       isFunction(reducer) || isObject(reducer),
       'The reducer parameter passed to createStoreWith must be a Function or an Object. Instead received %s.',
@@ -49,6 +50,7 @@ export default function ngReduxProvider() {
     _storeEnhancers = storeEnhancers || [];
     _middlewares = middlewares || [];
     _initialState = initialState || {};
+    _compose = customCompose && typeof customCompose === 'function' ? customCompose : compose;
   };
 
   this.$get = ($injector) => {
@@ -87,7 +89,7 @@ export default function ngReduxProvider() {
     const middlewares = applyMiddleware(...resolvedMiddleware);
 
     // compose enhancers with middleware and create store.
-    const store = createStore(_reducer, _initialState, compose(...resolvedStoreEnhancer, middlewares));
+    const store = createStore(_reducer, _initialState, _compose(...resolvedStoreEnhancer, middlewares));
 
     const mergedStore = assign({}, store, { connect: Connector(store) });
     
